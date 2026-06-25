@@ -120,9 +120,12 @@
                 if (!reposResponse.ok) throw new Error('Nie udało się połączyć z API.');
                 var repos = await reposResponse.json();
 
-                // Filtrowanie repozytoriów z pełną kompatybilnością wsteczną
+                // Filtrowanie repozytoriów z pełną kompatybilnością wsteczną (wykluczamy też samo to portfolio)
                 allProjects = repos.filter(function(repo) {
-                    return repo.name.toLowerCase() !== (GITHUB_USERNAME + '.github.io').toLowerCase() &&
+                    var nameLower = repo.name.toLowerCase();
+                    return nameLower !== (GITHUB_USERNAME + '.github.io').toLowerCase() &&
+                           nameLower !== 'saw-trak_projects' &&
+                           nameLower !== 'saw-trak-projects' &&
                            repo.language === 'HTML' &&
                            repo.has_pages;
                 });
