@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Saw-Trak Projects</title>
+    <!-- Tailwind CSS do nowoczesnego i szybkiego stylowania -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome do nowoczesnych ikon -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        /* Płynne efekty hover na kartach projektów dopasowane do marki */
+        .project-card {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .project-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 24px -10px rgba(243, 112, 33, 0.15);
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col justify-between selection:bg-orange-100 selection:text-orange-950">
+
+    <!-- Elegancki nagłówek z logo Saw-Trak -->
+    <header class="w-full bg-white border-b border-slate-200/80 shadow-sm sticky top-0 z-50">
+        <div class="max-w-6xl mx-auto px-4 py-4 flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div class="flex items-center">
+                <!-- Odwołanie do pliku logo-sawtrak_2.png z zastępczym generatorem w razie braku pliku -->
+                <img src="logo-sawtrak_2.png" alt="Saw-Trak Logo" class="h-12 w-auto object-contain transition-transform duration-300 hover:scale-105" onerror="this.onerror=null; this.src='https://placehold.co/180x50/334155/f97316?text=Saw-Trak';">
+            </div>
+            <div class="text-center sm:text-right">
+                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-orange-50 text-orange-600 border border-orange-150 mb-1">
+                    <span class="h-1.5 w-1.5 rounded-full bg-orange-500 animate-pulse"></span>
+                    Saw-Trak Projects
+                </span>
+                <p class="text-[11px] text-slate-400 font-medium">Automatyczne repozytorium systemów</p>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-6xl w-full mx-auto px-4 py-12 flex-grow">
+        
+        <!-- Pasek wyszukiwania dopasowany do motywu Saw-Trak -->
+        <div class="flex justify-center mb-12">
+            <div class="relative w-full max-w-lg">
+                <span class="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none text-slate-400">
+                    <i class="fa-solid fa-magnifying-glass text-sm"></i>
+                </span>
+                <input type="text" id="search-input" placeholder="Wyszukaj dedykowany projekt..." 
+                    class="w-full pl-11 pr-4 py-3.5 bg-white border border-slate-200 rounded-2xl text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-4 focus:ring-orange-500/10 focus:border-orange-500 transition-all shadow-sm">
+            </div>
+        </div>
+
+        <!-- Stan ładowania -->
+        <div id="loader" class="py-24 text-center">
+            <div class="inline-block animate-spin rounded-full h-9 w-9 border-4 border-orange-500 border-t-transparent mb-4"></div>
+            <p class="text-slate-500 text-sm font-medium animate-pulse">Pobieranie aktualnej listy wdrożeń z GitHub...</p>
+        </div>
+
+        <!-- Błąd połączenia -->
+        <div id="error-box" class="hidden max-w-sm mx-auto my-12 p-6 bg-red-50 border border-red-100 rounded-2xl text-center shadow-sm">
+            <div class="w-10 h-10 bg-red-100/80 rounded-full flex items-center justify-center mx-auto mb-3">
+                <i class="fa-solid fa-triangle-exclamation text-red-600"></i>
+            </div>
+            <h4 class="text-slate-800 font-bold text-sm mb-1">Błąd połączenia</h4>
+            <p id="error-message" class="text-xs text-slate-500 mb-4">Nie udało się pobrać danych z GitHub API.</p>
+            <button onclick="fetchProjects()" class="px-4 py-1.5 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold rounded-lg border border-slate-200 transition shadow-sm">
+                Spróbuj ponownie
+            </button>
+        </div>
+
+        <!-- Siatka projektów -->
+        <div id="projects-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 hidden">
+            <!-- Projekty zostaną wyrenderowane tutaj przez JavaScript -->
+        </div>
+
+        <!-- Brak wyników -->
+        <div id="no-results" class="hidden py-24 text-center text-slate-400">
+            <div class="w-12 h-12 bg-white border border-slate-200 rounded-xl flex items-center justify-center mx-auto mb-3 shadow-sm">
+                <i class="fa-solid fa-folder-open text-slate-400"></i>
+            </div>
+            <p class="text-xs font-medium text-slate-500">Brak projektów spełniających wybrane kryteria wyszukiwania.</p>
+        </div>
+    </main>
+
+    <!-- Stopka dopasowana do stylistyki Saw-Trak -->
+    <footer class="border-t border-slate-200 py-6 bg-white">
+        <div class="max-w-6xl mx-auto px-4 text-center text-xs text-slate-400 flex flex-col sm:flex-row justify-between items-center gap-3">
+            <p>&copy; <span id="current-year"></span> <span class="font-bold text-slate-700">Saw-Trak Projects</span>. Wszelkie prawa zastrzeżone.</p>
+            <p class="flex items-center gap-1.5 text-slate-400/80">
+                <i class="fa-brands fa-github text-slate-500"></i> Automatyczna synchronizacja przez <span class="font-medium text-slate-600">GitHub API</span>
+            </p>
+        </div>
+    </footer>
+
+    <script>
+        // Nazwa użytkownika na GitHubie
+        var GITHUB_USERNAME = "adamsa11"; 
+        
+        var allProjects = []; 
+
+        document.getElementById('current-year').textContent = new Date().getFullYear();
+
+        // Pobieranie danych z GitHub API
+        async function fetchProjects() {
+            var loader = document.getElementById('loader');
+            var errorBox = document.getElementById('error-box');
+            var projectsGrid = document.getElementById('projects-grid');
+
+            loader.classList.remove('hidden');
+            errorBox.classList.add('hidden');
+            projectsGrid.classList.add('hidden');
+
+            try {
+                var reposResponse = await fetch('https://api.github.com/users/' + GITHUB_USERNAME + '/repos?per_page=100&sort=updated');
+                if (!reposResponse.ok) throw new Error('Nie udało się połączyć z API.');
+                var repos = await reposResponse.json();
+
+                // Filtrowanie repozytoriów z pełną kompatybilnością wsteczną
+                allProjects = repos.filter(function(repo) {
+                    return repo.name.toLowerCase() !== (GITHUB_USERNAME + '.github.io').toLowerCase() &&
+                           repo.language === 'HTML' &&
+                           repo.has_pages;
+                });
+
+                filterAndRender();
+
+                loader.classList.add('hidden');
+                projectsGrid.classList.remove('hidden');
+
+            } catch (error) {
+                console.error(error);
+                document.getElementById('error-message').textContent = error.message;
+                loader.classList.add('hidden');
+                errorBox.classList.remove('hidden');
+            }
+        }
+
+        // Renderowanie kart bez użycia ryzykownych template literals i `${}`
+        function renderCards(projects) {
+            var grid = document.getElementById('projects-grid');
+            var noResults = document.getElementById('no-results');
+            grid.innerHTML = '';
+
+            if (projects.length === 0) {
+                grid.classList.add('hidden');
+                noResults.classList.remove('hidden');
+                return;
+            }
+
+            noResults.classList.add('hidden');
+            grid.classList.remove('hidden');
+
+            projects.forEach(function(project) {
+                var pagesUrl = 'https://' + GITHUB_USERNAME + '.github.io/' + project.name + '/';
+                var isNew = (new Date() - new Date(project.updated_at)) < (30 * 24 * 60 * 60 * 1000);
+                var displayName = project.name.replace(/[-_]/g, ' ');
+                var descriptionText = project.description || 'Brak opisu dla tego wdrożenia.';
+
+                var card = document.createElement('div');
+                card.className = "project-card bg-white border border-slate-200/80 rounded-2xl p-6 flex flex-col justify-between h-full shadow-sm relative overflow-hidden";
+
+                // Bezpieczne, tradycyjne łączenie ciągów znaków (ES5 string concatenation)
+                var cardContent = '';
+                cardContent += '<div>';
+                cardContent += '    <div class="flex items-center justify-between mb-4">';
+                cardContent += '        <span class="text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-600 border border-emerald-200/50 flex items-center gap-1.5">';
+                cardContent += '            <span class="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"></span>';
+                cardContent += '            Live';
+                cardContent += '        </span>';
+                cardContent += '        <div class="flex items-center gap-3 text-xs text-slate-400 font-medium">';
+                if (isNew) {
+                    cardContent += '        <span class="text-[9px] uppercase tracking-wide font-black bg-orange-500 text-white px-1.5 py-0.5 rounded">NOWY</span>';
+                }
+                cardContent += '        </div>';
+                cardContent += '    </div>';
+                cardContent += '    <h4 class="text-base font-bold text-slate-900 mb-2 truncate" title="' + project.name + '">';
+                cardContent += '        ' + displayName;
+                cardContent += '    </h4>';
+                cardContent += '    <p class="text-slate-500 text-xs leading-relaxed line-clamp-3 mb-5 min-h-[54px]">';
+                cardContent += '        ' + descriptionText;
+                cardContent += '    </p>';
+                cardContent += '</div>';
+                cardContent += '<div>';
+                cardContent += '    <div class="pt-4 border-t border-slate-100">';
+                cardContent += '        <a href="' + pagesUrl + '" target="_blank" class="w-full flex items-center justify-center gap-1.5 px-4 py-2.5 bg-orange-600 hover:bg-orange-700 text-white text-xs font-semibold rounded-xl transition shadow-sm shadow-orange-600/10">';
+                cardContent += '            <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i> Otwórz wdrożenie';
+                cardContent += '        </a>';
+                cardContent += '    </div>';
+                cardContent += '</div>';
+
+                card.innerHTML = cardContent;
+                grid.appendChild(card);
+            });
+        }
+
+        // Filtrowanie i wyszukiwanie w czasie rzeczywistym
+        function filterAndRender() {
+            var searchQuery = document.getElementById('search-input').value.toLowerCase();
+
+            var filtered = allProjects.filter(function(project) {
+                var nameMatches = project.name.toLowerCase().indexOf(searchQuery) !== -1;
+                var descriptionMatches = project.description && project.description.toLowerCase().indexOf(searchQuery) !== -1;
+                return nameMatches || descriptionMatches;
+            });
+
+            renderCards(filtered);
+        }
+
+        document.getElementById('search-input').addEventListener('input', filterAndRender);
+
+        // Wywołanie startu przy załadowaniu strony
+        window.addEventListener('DOMContentLoaded', fetchProjects);
+    </script>
+</body>
+</html>
